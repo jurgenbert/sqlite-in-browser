@@ -29,12 +29,22 @@
   header { padding: 12px 16px; border-bottom: 1px solid var(--border); background: var(--panel);
            display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
   header h1 { font-size: 18px; margin: 0 16px 0 0; }
-  button, .filebtn { font: inherit; font-size: 14px; padding: 6px 12px; border-radius: 6px;
+  button { font: inherit; font-size: 14px; padding: 6px 12px; border-radius: 6px;
            border: 1px solid var(--border); background: var(--panel); color: var(--text); cursor: pointer; }
-  button:hover, .filebtn:hover { border-color: var(--accent); }
+  button:hover { border-color: var(--accent); }
   button.primary { background: var(--accent); color: var(--accent-text); border-color: var(--accent); }
-  .filebtn input { display: none; }
-  label.check { font-size: 14px; display: inline-flex; gap: 6px; align-items: center; }
+  .menu { position: relative; }
+  .menu-panel { position: absolute; top: calc(100% + 4px); left: 0; z-index: 10; min-width: 230px;
+                background: var(--panel); border: 1px solid var(--border); border-radius: 8px;
+                box-shadow: 0 8px 24px rgba(0,0,0,.18); padding: 6px; }
+  .menu-panel[hidden] { display: none; }
+  .menu-title { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; padding: 6px 10px 2px; }
+  .menu-panel .item { display: flex; align-items: center; gap: 8px; width: 100%; text-align: left;
+                      font-size: 14px; padding: 7px 10px; border: 0; border-radius: 5px;
+                      background: transparent; color: var(--text); cursor: pointer; }
+  .menu-panel .item:hover { background: var(--row-alt); }
+  .menu-panel label.item input[type=file] { display: none; }
+  .menu-panel .sep { height: 1px; background: var(--border); margin: 6px 4px; }
   main { display: grid; grid-template-columns: 220px 1fr; gap: 16px; padding: 16px; }
   @media (max-width: 720px) { main { grid-template-columns: 1fr; } }
   aside, section { background: var(--panel); border: 1px solid var(--border); border-radius: 8px; padding: 12px; min-width: 0; }
@@ -65,14 +75,25 @@
 <body>
 <header>
   <h1>SQLite in de browser</h1>
-  <button id="btnNew">Nieuwe database</button>
-  <label class="filebtn">Open .sqlite<input type="file" id="fileDb" accept=".sqlite,.sqlite3,.db"></label>
-  <label class="filebtn">Importeer .sql<input type="file" id="fileSql" accept=".sql,.txt"></label>
-  <button id="btnDownload">Download .sqlite</button>
-  <button id="btnExportSql">Exporteer .sql</button>
-  <button id="btnSave">Bewaar in browser</button>
-  <label class="check"><input type="checkbox" id="autoSave"> automatisch bewaren</label>
-  <button id="btnTheme" title="Wissel tussen donker en licht"></button>
+  <div class="menu">
+    <button id="btnMenu" aria-haspopup="true" aria-expanded="false">☰ Menu ▾</button>
+    <div class="menu-panel" id="menuPanel" role="menu" hidden>
+      <div class="menu-title">Database</div>
+      <button class="item" id="btnNew" role="menuitem">Nieuwe database</button>
+      <label class="item" role="menuitem">Open .sqlite…<input type="file" id="fileDb" accept=".sqlite,.sqlite3,.db"></label>
+      <button class="item" id="btnDownload" role="menuitem">Download .sqlite</button>
+      <div class="sep"></div>
+      <div class="menu-title">SQL-bestand</div>
+      <label class="item" role="menuitem">Importeer .sql…<input type="file" id="fileSql" accept=".sql,.txt"></label>
+      <button class="item" id="btnExportSql" role="menuitem">Exporteer .sql</button>
+      <div class="sep"></div>
+      <div class="menu-title">Browser</div>
+      <button class="item" id="btnSave" role="menuitem">Bewaar in browser</button>
+      <label class="item check"><input type="checkbox" id="autoSave"> Automatisch bewaren</label>
+      <div class="sep"></div>
+      <button class="item" id="btnTheme" role="menuitem"></button>
+    </div>
+  </div>
   <span id="status">Laden…</span>
 </header>
 
@@ -294,6 +315,17 @@ $(function () {
     if (this.checked) saveToBrowser(true);
   });
   $('#btnRun').on('click', run);
+
+  // ---------- Dropdownmenu ----------
+  function toggleMenu(open) {
+    $('#menuPanel').prop('hidden', !open);
+    $('#btnMenu').attr('aria-expanded', open);
+  }
+  $('#btnMenu').on('click', e => { e.stopPropagation(); toggleMenu($('#menuPanel').prop('hidden')); });
+  // Sluit na een keuze, behalve bij het vinkje "automatisch bewaren"
+  $('#menuPanel').on('click', '.item:not(.check)', () => toggleMenu(false));
+  $(document).on('click', e => { if (!$(e.target).closest('.menu').length) toggleMenu(false); });
+  $(document).on('keydown', e => { if (e.key === 'Escape') toggleMenu(false); });
   $('#btnClear').on('click', () => $('#results').empty());
   $('#sql').on('keydown', e => { if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') { e.preventDefault(); run(); } });
 
@@ -304,7 +336,7 @@ $(function () {
   }
   function applyTheme(t) {
     if (t) document.documentElement.setAttribute('data-theme', t);
-    $('#btnTheme').text(isDark() ? '☀️ Licht' : '🌙 Donker');
+    $('#btnTheme').text(isDark() ? '☀️ Lichte weergave' : '🌙 Donkere weergave');
   }
   $('#btnTheme').on('click', () => {
     const t = isDark() ? 'light' : 'dark';
