@@ -45,13 +45,23 @@
   .menu-panel .item:hover { background: var(--row-alt); }
   .menu-panel label.item input[type=file] { display: none; }
   .menu-panel .sep { height: 1px; background: var(--border); margin: 6px 4px; }
-  main { display: grid; grid-template-columns: 220px 1fr; gap: 16px; padding: 16px; }
+  main { display: grid; grid-template-columns: 260px 1fr; gap: 16px; padding: 16px; }
   @media (max-width: 720px) { main { grid-template-columns: 1fr; } }
   aside, section { background: var(--panel); border: 1px solid var(--border); border-radius: 8px; padding: 12px; min-width: 0; }
   aside h2, section h2 { font-size: 14px; margin: 0 0 8px; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; }
   #tables { list-style: none; margin: 0; padding: 0; }
   #tables li { padding: 4px 6px; border-radius: 4px; cursor: pointer; font-family: ui-monospace, monospace; font-size: 13px; }
   #tables li:hover { background: var(--row-alt); }
+  .hist-head { display: flex; align-items: center; justify-content: space-between; margin-top: 16px; }
+  .hist-head h2 { margin: 0; }
+  button.small { font-size: 12px; padding: 2px 8px; }
+  #history { list-style: none; margin: 8px 0 0; padding: 0; max-height: 50vh; overflow-y: auto; }
+  #history li { padding: 5px 6px 5px 8px; border-radius: 4px; cursor: pointer; border-left: 3px solid var(--ok); margin-bottom: 2px; }
+  #history li.err { border-left-color: var(--err); }
+  #history li:hover { background: var(--row-alt); }
+  #history .q { font-family: ui-monospace, monospace; font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  #history .t { font-size: 11px; color: var(--muted); }
+  #history .empty { color: var(--muted); cursor: default; border: 0; }
   #tables .empty { color: var(--muted); cursor: default; font-family: inherit; }
   textarea { width: 100%; min-height: 160px; resize: vertical; font-family: ui-monospace, Menlo, Consolas, monospace;
              font-size: 14px; padding: 10px; border: 1px solid var(--border); border-radius: 6px;
@@ -101,6 +111,11 @@
   <aside>
     <h2>Tabellen</h2>
     <ul id="tables"></ul>
+    <div class="hist-head">
+      <h2>Historiek</h2>
+      <button id="btnClearHist" class="small" title="Historiek wissen">Wissen</button>
+    </div>
+    <ul id="history"></ul>
   </aside>
   <section>
     <h2>SQL</h2>
@@ -208,11 +223,11 @@ $(function () {
   }
 
   // Voert elk commando apart uit, zodat je per commando het resultaat ziet
-  function run() {
+  function run(opts) {
     const text = $('#sql').val();
     if (!text.trim()) return;
     $('#results').empty();
-    let didChange = false;
+    let didChange = false, ok = true;
     try {
       for (const stmt of db.iterateStatements(text)) {
         const sqlText = stmt.getSQL().trim();
@@ -234,9 +249,44 @@ $(function () {
       }
     } catch (e) {
       addResult(null, $('<div class="msg err">').text('Fout: ' + e.message));
+      ok = false;
     }
+    if (!(opts && opts.noHistory)) addHistory(text.trim(), ok);
     if (didChange) changed();
   }
+
+  // ---------- Historiek ----------
+  const HIST_MAX = 200;
+  function loadHistory() { try { return JSON.parse(localStorage.getItem('history')) || []; } catch (e) { return []; } }
+  function saveHistory(h) { try { localStorage.setItem('history', JSON.stringify(h)); } catch (e) {} }
+
+  function addHistory(sqlText, ok) {
+    let h = loadHistory();
+    // Hetzelfde commando opnieuw uitgevoerd? Dan schuift het naar boven in plaats van dubbel te staan.
+    h = h.filter(x => x.sql !== sqlText);
+    h.unshift({ sql: sqlText, ok: ok, time: Date.now() });
+    saveHistory(h.slice(0, HIST_MAX));
+    renderHistory();
+  }
+
+  function renderHistory() {
+    const $ul = $('#history').empty(), h = loadHistory();
+    if (!h.length) { $ul.append('<li class="empty">Nog niets uitgevoerd</li>'); return; }
+    h.forEach(x => {
+      const d = new Date(x.time);
+      $('<li>').toggleClass('err', !x.ok).attr('title', x.sql)
+        .append($('<div class="q">').text(x.sql.replace(/\s+/g, ' ')))
+        .append($('<div class="t">').text(d.toLocaleDateString() + ' ' + d.toLocaleTimeString() + (x.ok ? '' : ' · fout')))
+        .on('click', () => { $('#sql').val(x.sql).trigger('focus'); })
+        .appendTo($ul);
+    });
+  }
+
+  $('#btnClearHist').on('click', () => {
+    if (!confirm('Volledige historiek wissen?')) return;
+    saveHistory([]); renderHistory();
+  });
+  renderHistory();
 
   // ---------- Bestanden ----------
   function download(blob, name) {
@@ -300,7 +350,7 @@ $(function () {
     const reader = new FileReader();
     reader.onload = () => {
       $('#sql').val(reader.result);
-      run();
+      run({ noHistory: true });
       status('Geïmporteerd: ' + f.name);
     };
     reader.readAsText(f);
@@ -314,7 +364,7 @@ $(function () {
     setPref('autoSave', this.checked ? '1' : '0');
     if (this.checked) saveToBrowser(true);
   });
-  $('#btnRun').on('click', run);
+  $('#btnRun').on('click', () => run());
 
   // ---------- Dropdownmenu ----------
   function toggleMenu(open) {
