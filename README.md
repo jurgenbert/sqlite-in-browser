@@ -6,7 +6,7 @@ Een webpagina waarop je SQL-commando's (CREATE TABLE, INSERT, SELECT, UPDATE, DE
 
 - SQL uitvoeren (knop of Ctrl/Cmd + Enter), meerdere commando's na elkaar, met resultaat per commando
 - Lijst met tabellen; klik om de eerste 100 rijen te zien
-- Historiek van uitgevoerde SQL (bewaard in de browser); klik om een commando terug in het invoerveld te zetten, aan te passen en opnieuw uit te voeren
+- Historiek van uitgevoerde SQL (bewaard in de browser); klik om een commando terug in het invoerveld te zetten, aan te passen en opnieuw uit te voeren, of exporteer de volledige historiek als `.sql`
 - Database bewaren in de browser (IndexedDB), automatisch of met de knop
 - Nieuwe lege database starten
 - Bestaande `.sqlite`-database openen en de huidige database als `.sqlite` downloaden

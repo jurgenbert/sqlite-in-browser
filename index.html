@@ -96,6 +96,7 @@
       <div class="menu-title">SQL-bestand</div>
       <label class="item" role="menuitem">Importeer .sql…<input type="file" id="fileSql" accept=".sql,.txt"></label>
       <button class="item" id="btnExportSql" role="menuitem">Exporteer .sql</button>
+      <button class="item" id="btnExportHist2" role="menuitem">Exporteer historiek als .sql</button>
       <div class="sep"></div>
       <div class="menu-title">Browser</div>
       <button class="item" id="btnSave" role="menuitem">Bewaar in browser</button>
@@ -113,7 +114,10 @@
     <ul id="tables"></ul>
     <div class="hist-head">
       <h2>Historiek</h2>
-      <button id="btnClearHist" class="small" title="Historiek wissen">Wissen</button>
+      <span>
+        <button id="btnExportHist" class="small" title="Historiek downloaden als .sql-bestand">Exporteer</button>
+        <button id="btnClearHist" class="small" title="Historiek wissen">Wissen</button>
+      </span>
     </div>
     <ul id="history"></ul>
   </aside>
@@ -242,7 +246,7 @@ $(function () {
             : $('<div class="msg ok">').text('Geen rijen gevonden.'));
         } else {
           const n = db.getRowsModified();
-          const isDml = /^\s*(insert|update|delete|replace)/i.test(sqlText);
+          const isDml = /^(\s|--[^\n]*\n?|\/\*[\s\S]*?\*\/)*(insert|update|delete|replace)/i.test(sqlText);
           addResult(sqlText, $('<div class="msg ok">').text(isDml ? n + ' rij(en) gewijzigd.' : 'Uitgevoerd.'));
           didChange = true;
         }
@@ -281,6 +285,27 @@ $(function () {
         .appendTo($ul);
     });
   }
+
+  // Oudste eerst, zodat het bestand in dezelfde volgorde opnieuw uitgevoerd kan worden.
+  // Mislukte commando's staan erin als commentaar, zodat het bestand zonder fouten draait.
+  function exportHistory() {
+    const h = loadHistory().slice().reverse();
+    if (!h.length) { alert('De historiek is leeg.'); return; }
+    const pad = n => String(n).padStart(2, '0');
+    const stamp = d => d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()) + ' ' +
+                       pad(d.getHours()) + ':' + pad(d.getMinutes()) + ':' + pad(d.getSeconds());
+    let out = '-- Historiek SQLite in de browser\n-- Geëxporteerd op ' + stamp(new Date()) + '\n\n';
+    h.forEach(x => {
+      let sql = x.sql.trim();
+      if (!sql.endsWith(';')) sql += ';';
+      if (x.ok) out += '-- ' + stamp(new Date(x.time)) + '\n' + sql + '\n\n';
+      else out += '-- ' + stamp(new Date(x.time)) + ' (mislukt)\n' + sql.split('\n').map(l => '-- ' + l).join('\n') + '\n\n';
+    });
+    const now = new Date();
+    download(new Blob([out], { type: 'text/plain' }),
+      'historiek-' + now.getFullYear() + pad(now.getMonth() + 1) + pad(now.getDate()) + '.sql');
+  }
+  $('#btnExportHist, #btnExportHist2').on('click', exportHistory);
 
   $('#btnClearHist').on('click', () => {
     if (!confirm('Volledige historiek wissen?')) return;
