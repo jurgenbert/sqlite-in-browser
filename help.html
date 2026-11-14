@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SQL-help</title>
+<script>try { const t = localStorage.getItem('theme'); if (t) document.documentElement.setAttribute('data-theme', t); } catch (e) {}</script>
+<style>
+  :root {
+    --bg: #f6f7f9; --panel: #ffffff; --text: #1d2330; --muted: #6b7280;
+    --border: #d9dde4; --accent: #2563eb; --accent-text: #ffffff;
+    --ok: #15803d; --code-bg: #f3f5f8; --kw: #7c3aed; --str: #b45309; --cmt: #6b7280;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #14171c; --panel: #1c2027; --text: #e6e8ec; --muted: #9aa3af;
+      --border: #333a45; --accent: #3b82f6; --accent-text: #ffffff;
+      --ok: #4ade80; --code-bg: #15181d; --kw: #c4b5fd; --str: #fbbf24; --cmt: #8b94a1;
+    }
+  }
+  :root[data-theme="dark"] {
+      --bg: #14171c; --panel: #1c2027; --text: #e6e8ec; --muted: #9aa3af;
+      --border: #333a45; --accent: #3b82f6; --accent-text: #ffffff;
+      --ok: #4ade80; --code-bg: #15181d; --kw: #c4b5fd; --str: #fbbf24; --cmt: #8b94a1;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; scroll-padding-top: 76px; }
+  body { margin: 0; font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+         background: var(--bg); color: var(--text); line-height: 1.5; }
+  header { position: sticky; top: 0; z-index: 5; padding: 12px 16px; border-bottom: 1px solid var(--border);
+           background: var(--panel); display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
+  header h1 { font-size: 18px; margin: 0; }
+  header a { color: var(--accent); text-decoration: none; font-size: 14px; }
+  header a:hover { text-decoration: underline; }
+  #search { margin-left: auto; font: inherit; font-size: 14px; padding: 6px 10px; width: 240px; max-width: 100%;
+            border: 1px solid var(--border); border-radius: 6px; background: var(--bg); color: var(--text); }
+  button { font: inherit; font-size: 13px; padding: 4px 10px; border-radius: 6px; cursor: pointer;
+           border: 1px solid var(--border); background: var(--panel); color: var(--text); }
+  button:hover { border-color: var(--accent); }
+  .layout { display: grid; grid-template-columns: 200px 1fr; gap: 24px; padding: 16px; max-width: 1200px; margin: 0 auto; }
+  nav { position: sticky; top: 76px; align-self: start; }
+  nav h2 { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; margin: 0 0 8px; }
+  nav a { display: flex; justify-content: space-between; padding: 6px 10px; border-radius: 6px;
+          color: var(--text); text-decoration: none; font-size: 14px; }
+  nav a:hover { background: var(--panel); }
+  nav a span { color: var(--muted); font-size: 12px; margin-left: 8px; }
+  @media (max-width: 760px) {
+    .layout { grid-template-columns: 1fr; }
+    nav { position: static; display: flex; flex-wrap: wrap; gap: 4px; }
+    nav h2 { width: 100%; }
+    nav a { border: 1px solid var(--border); background: var(--panel); }
+    #search { margin-left: 0; width: 100%; }
+  }
+  section { margin-bottom: 32px; }
+  section > h2 { font-size: 20px; margin: 0 0 4px; }
+  section > p { margin: 0 0 12px; color: var(--muted); }
+  .cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 12px; }
+  @media (max-width: 420px) { .cards { grid-template-columns: 1fr; } }
+  .card { background: var(--panel); border: 1px solid var(--border); border-radius: 8px; padding: 12px 14px;
+          display: flex; flex-direction: column; min-width: 0; }
+  .card-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+  .card h3 { font-size: 15px; margin: 0; font-family: ui-monospace, Menlo, Consolas, monospace; }
+  .card p { font-size: 14px; margin: 6px 0 10px; color: var(--muted); }
+  pre { margin: auto 0 0; padding: 10px 12px; background: var(--code-bg); border: 1px solid var(--border);
+        border-radius: 6px; overflow-x: auto; font-size: 13px; font-family: ui-monospace, Menlo, Consolas, monospace; }
+  .kw { color: var(--kw); font-weight: 600; } .str { color: var(--str); } .cmt { color: var(--cmt); font-style: italic; }
+  .copied { color: var(--ok); border-color: var(--ok); }
+  .rules { background: var(--panel); border: 1px solid var(--border); border-radius: 8px; padding: 12px 16px; margin-bottom: 32px; }
+  .rules h2 { font-size: 16px; margin: 0 0 6px; }
+  .rules ul { margin: 0; padding-left: 20px; font-size: 14px; }
+  .rules code { font-family: ui-monospace, monospace; background: var(--code-bg); padding: 1px 5px; border-radius: 4px; }
+  #empty { color: var(--muted); display: none; }
+  .hidden { display: none !important; }
+</style>
+</head>
+<body>
+<header>
+  <h1>SQL-help</h1>
+  <a href="index.html">← Terug naar de editor</a>
+  <input type="search" id="search" placeholder="Zoek, bijv. join of datum" aria-label="Zoek in de voorbeelden">
+</header>
+
+<div class="layout">
+  <nav id="toc"><h2>Inhoud</h2></nav>
+  <main>
+    <div class="rules">
+      <h2>Basisregels</h2>
+      <ul>
+        <li>Sluit elk commando af met een puntkomma <code>;</code>. Zo kun je meerdere commando's na elkaar uitvoeren.</li>
+        <li>Tekst staat tussen enkele aanhalingstekens: <code>'5A'</code>. Een aanhalingsteken in tekst schrijf je dubbel: <code>'Ann''s'</code>.</li>
+        <li>Hoofdletters maken niet uit voor sleutelwoorden: <code>select</code> is hetzelfde als <code>SELECT</code>.</li>
+        <li>Commentaar begint met <code>--</code> en loopt tot het einde van de regel.</li>
+        <li>Een lege waarde heet <code>NULL</code>. Test ze met <code>IS NULL</code>, niet met <code>=</code>.</li>
+      </ul>
+    </div>
+    <div id="content"></div>
+    <p id="empty">Geen voorbeelden gevonden.</p>
+  </main>
+</div>
+
+<script src="snippets.js"></script>
+<script>
+(function () {
+  const KW = /\b(SELECT|FROM|WHERE|AND|OR|NOT|IN|LIKE|BETWEEN|IS|NULL|ORDER|BY|GROUP|HAVING|LIMIT|OFFSET|ASC|DESC|DISTINCT|AS|INSERT|INTO|VALUES|UPDATE|SET|DELETE|CREATE|TABLE|VIEW|INDEX|DROP|ALTER|ADD|COLUMN|RENAME|TO|IF|EXISTS|PRIMARY|KEY|FOREIGN|REFERENCES|ON|CASCADE|AUTOINCREMENT|DEFAULT|CHECK|INTEGER|TEXT|REAL|DATE|BLOB|INNER|LEFT|JOIN|CASE|WHEN|THEN|ELSE|END|BEGIN|TRANSACTION|COMMIT|ROLLBACK|PRAGMA|COUNT|AVG|MIN|MAX|SUM)\b/g;
+
+  function esc(s) { return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
+
+  // Eenvoudige kleuring: commentaar, tekst tussen aanhalingstekens en sleutelwoorden
+  function highlight(code) {
+    return code.split(/('(?:[^']|'')*'|--[^\n]*)/).map(part => {
+      if (part.startsWith('--')) return '<span class="cmt">' + esc(part) + '</span>';
+      if (part.startsWith("'")) return '<span class="str">' + esc(part) + '</span>';
+      return esc(part).replace(KW, '<span class="kw">$1</span>');
+    }).join('');
+  }
+
+  const content = document.getElementById('content'), toc = document.getElementById('toc');
+  (window.SQL_SNIPPETS || []).forEach(g => {
+    const sec = document.createElement('section');
+    sec.id = g.id;
+    sec.innerHTML = '<h2>' + esc(g.group) + '</h2><p>' + esc(g.intro || '') + '</p><div class="cards"></div>';
+    const cards = sec.querySelector('.cards');
+    g.items.forEach(sn => {
+      const card = document.createElement('article');
+      card.className = 'card';
+      card.dataset.search = (sn.title + ' ' + sn.info + ' ' + sn.code).toLowerCase();
+      card.innerHTML = '<div class="card-head"><h3>' + esc(sn.title) + '</h3><button type="button">Kopieer</button></div>' +
+                       '<p>' + esc(sn.info) + '</p><pre><code>' + highlight(sn.code) + '</code></pre>';
+      card.querySelector('button').addEventListener('click', function () {
+        const btn = this;
+        const done = () => { btn.textContent = 'Gekopieerd ✓'; btn.classList.add('copied');
+                             setTimeout(() => { btn.textContent = 'Kopieer'; btn.classList.remove('copied'); }, 1500); };
+        if (navigator.clipboard) navigator.clipboard.writeText(sn.code).then(done, () => fallback(sn.code, done));
+        else fallback(sn.code, done);
+      });
+      cards.appendChild(card);
+    });
+    content.appendChild(sec);
+    const a = document.createElement('a');
+    a.href = '#' + g.id;
+    a.innerHTML = esc(g.group) + ' <span>' + g.items.length + '</span>';
+    toc.appendChild(a);
+  });
+
+  function fallback(text, done) {
+    const ta = document.createElement('textarea');
+    ta.value = text; document.body.appendChild(ta); ta.select();
+    try { document.execCommand('copy'); done(); } catch (e) {}
+    ta.remove();
+  }
+
+  document.getElementById('search').addEventListener('input', function () {
+    const q = this.value.trim().toLowerCase();
+    let any = false;
+    document.querySelectorAll('section').forEach(sec => {
+      let shown = 0;
+      sec.querySelectorAll('.card').forEach(c => {
+        const hit = !q || c.dataset.search.includes(q);
+        c.classList.toggle('hidden', !hit);
+        if (hit) shown++;
+      });
+      sec.classList.toggle('hidden', shown === 0);
+      if (shown) any = true;
+    });
+    document.querySelector('.rules').classList.toggle('hidden', !!q);
+    document.getElementById('empty').style.display = any ? 'none' : 'block';
+  });
+})();
+</script>
+</body>
+</html>

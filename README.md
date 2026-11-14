@@ -13,6 +13,7 @@ Een webpagina waarop je SQL-commando's (CREATE TABLE, INSERT, SELECT, UPDATE, DE
 - `.sql`-bestand importeren en uitvoeren, of de database exporteren als `.sql`
 - Alle acties in één dropdownmenu, met een donker/licht-schakelaar
 - Knop "Voorbeelden" boven het invoerveld met snippets voor CREATE TABLE, INSERT, UPDATE, DELETE, SELECT, JOIN, GROUP BY, …
+- Helppagina (`help.html`) met alle voorbeelden gegroepeerd, met uitleg, zoekveld en kopieerknop
 
 ## Gebruik
 
