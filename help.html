@@ -89,6 +89,9 @@
         <li>Sluit elk commando af met een puntkomma <code>;</code>. Zo kun je meerdere commando's na elkaar uitvoeren.</li>
         <li>Tekst staat tussen enkele aanhalingstekens: <code>'5A'</code>. Een aanhalingsteken in tekst schrijf je dubbel: <code>'Ann''s'</code>.</li>
         <li>Hoofdletters maken niet uit voor sleutelwoorden: <code>select</code> is hetzelfde als <code>SELECT</code>.</li>
+        <li>Met de knop <strong>Invoer wissen</strong> maak je het invoerveld in één klik leeg. Per ongeluk gewist? <code>Ctrl/Cmd + Z</code> zet de tekst terug.</li>
+        <li><code>FOREIGN KEY</code>-regels worden altijd gecontroleerd: een <code>INSERT</code> met een verwijzing naar een rij die niet bestaat geeft de fout <em>FOREIGN KEY constraint failed</em>.</li>
+        <li>Automatisch nummeren doe je in SQLite met <code>INTEGER PRIMARY KEY AUTOINCREMENT</code>. <code>INT AUTO_INCREMENT</code> (MySQL) nummert hier niet automatisch.</li>
         <li>Commentaar begint met <code>--</code> en loopt tot het einde van de regel.</li>
         <li>Een lege waarde heet <code>NULL</code>. Test ze met <code>IS NULL</code>, niet met <code>=</code>.</li>
       </ul>
