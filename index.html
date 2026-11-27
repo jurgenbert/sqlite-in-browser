@@ -145,6 +145,7 @@
     <textarea id="sql" spellcheck="false" placeholder="Typ hier je SQL, bijv. SELECT * FROM leerlingen;"></textarea>
     <div class="row">
       <button class="primary" id="btnRun">Uitvoeren</button>
+      <button id="btnClearSql" title="Invoerveld leegmaken (Ctrl/Cmd + Z zet het terug)">Invoer wissen</button>
       <button id="btnClear">Resultaten wissen</button>
       <span class="hint">Ctrl/Cmd + Enter voert uit. Meerdere commando's scheiden met ;</span>
     </div>
@@ -455,6 +456,14 @@ $(function () {
     ta.focus();
     ta.setSelectionRange(s + code.length, s + code.length);
   }
+  // Maak het invoerveld leeg; via execCommand blijft Ctrl/Cmd + Z werken
+  $('#btnClearSql').on('click', () => {
+    const ta = $('#sql')[0];
+    ta.focus();
+    ta.select();
+    if (!ta.value || !document.execCommand('delete')) ta.value = '';
+    ta.focus();
+  });
   $('#btnClear').on('click', () => $('#results').empty());
   $('#sql').on('keydown', e => { if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') { e.preventDefault(); run(); } });
 
