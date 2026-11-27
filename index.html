@@ -253,6 +253,9 @@ $(function () {
     if (!text.trim()) return;
     $('#results').empty();
     let didChange = false, ok = true;
+    // Foreign keys altijd afdwingen (een eerder PRAGMA of .sql-import kan ze uitgezet hebben).
+    // Wie ze bewust uit wil, zet PRAGMA foreign_keys = OFF; in hetzelfde script.
+    try { db.exec('PRAGMA foreign_keys = ON;'); } catch (e) {}
     try {
       for (const stmt of db.iterateStatements(text)) {
         const sqlText = stmt.getSQL().trim();
@@ -363,7 +366,7 @@ $(function () {
       });
       objs[0].values.forEach(([type, , sql]) => { if (type !== 'table') out += sql + ';\n'; });
     }
-    return out + 'COMMIT;\n';
+    return out + 'COMMIT;\nPRAGMA foreign_keys=ON;\n';
   }
 
   $('#btnNew').on('click', () => {
